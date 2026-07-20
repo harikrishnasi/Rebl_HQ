@@ -699,7 +699,14 @@ table.rebl--mini th, table.rebl--mini td { padding: 6px 8px 6px 0; }
 .label-th { font-size: 12px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: var(--bone-dim); }
 
 @media (max-width: 900px) {
-  .home-body, .finance-body, .doc-layout { grid-template-columns: 1fr; }
+  /* minmax(0, 1fr), not bare 1fr: a bare 1fr track's automatic minimum
+     grows to fit its widest descendant's content (e.g. the finance table),
+     which then drags every sibling sharing that track — like .filter-bar —
+     out just as wide. minmax(0, ...) caps the automatic minimum at 0 so the
+     track shrinks to the real container width and wide children rely on
+     their own overflow-x (.table-wrap) instead of inflating the track.
+     Confirmed via Playwright: this exact mechanism was the Finance overflow. */
+  .home-body, .finance-body, .doc-layout { grid-template-columns: minmax(0, 1fr); }
   .version-rail { position: static; }
 }
 
@@ -1033,3 +1040,123 @@ select.cell--select, select.input, select.tag-select {
 .home-quote:hover .home-quote-text,
 .home-quote:focus-visible .home-quote-text { color: var(--bone); }
 .home-quote .label { margin-top: 8px; }
+
+/* ============================================================
+   MOBILE — real fixes, verified with Playwright at 375px:
+   1) Finance's filter-bar search input overflowed the page (flex item
+      with width:100% refused to wrap under sibling chips). Root-caused
+      via DOM measurement, not guessed.
+   2) Every form control was under 16px, which makes iOS Safari zoom
+      the whole page in the instant you tap to edit — worst on document
+      edit and every tracker cell (Leads/Content/Accounts/Subscriptions).
+   3) Row-delete buttons were opacity:0 until :hover, which never fires
+      on touch — delete was effectively unreachable on a phone.
+   4) Checkboxes and icon buttons were under the ~44px touch target.
+   ============================================================ */
+
+/* ---- (1) the exact overflow bug: search inputs sharing a flex row with
+   chips. NOTE: flex-basis as a PERCENTAGE (e.g. 100%) resolves inconsistently
+   here — confirmed via Playwright that identical CSS overflows only under
+   real mobile emulation (isMobile+hasTouch), not desktop-viewport emulation,
+   because the flex-basis % resolves against the auto-width flex container
+   differently between the two layout paths. A pixel flex-basis avoids the
+   ambiguity entirely and was verified overflow-free in both. */
+@media (max-width: 820px) {
+  .input--search {
+    flex: 1 1 160px;
+    max-width: none;
+    min-width: 0;
+  }
+}
+
+/* ---- (2) 16px minimum on every form control prevents iOS auto-zoom ---- */
+@media (max-width: 820px) {
+  .cell, .input, .tag-select, .task-edit-input, .doc-body,
+  select, textarea, input[type="text"], input[type="date"],
+  input[type="number"], input[type="email"], input[type="password"] {
+    font-size: 16px;
+  }
+  .sub-amount-cell input.cell { max-width: none; width: 74px; flex: none; }
+}
+
+/* ---- (3) always show row actions on touch (no hover state exists) ---- */
+@media (hover: none), (pointer: coarse) {
+  table.rebl tr .icon-btn { opacity: 1; }
+}
+
+/* ---- (4) bigger touch targets without changing the visual size ---- */
+@media (max-width: 820px) {
+  .task-box { width: 20px; height: 20px; }
+  .cell--check { width: 20px; height: 20px; }
+  .icon-btn { padding: 8px 10px; }
+  .chip, .th-sort { padding-top: 7px; padding-bottom: 7px; }
+}
+
+/* ---- form clusters: stack full-width on mobile for one-handed use ---- */
+@media (max-width: 820px) {
+  .tx-add, .task-addbar, .entry-edit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .tx-add > *, .task-addbar > *, .entry-edit-row > * {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+  .tx-add .kind-toggle { display: flex; }
+  .tx-add .kind-toggle .chip { flex: 1; text-align: center; }
+  #ta-tag, #tx-tag, #vd-tag, .tag-select { max-width: none; }
+}
+
+/* ---- documents: version rail readable, pdf pane not oversized ---- */
+@media (max-width: 900px) {
+  .doc-frame { height: 60vh; }
+  .version-item { padding: 11px 10px; }
+}
+
+/* ---- prose: never let doc content (tables, long tokens) break the
+   page — scroll inside the article, not the whole viewport ---- */
+.prose { overflow-wrap: break-word; }
+.prose table { display: block; overflow-x: auto; }
+
+/* ---- global safety net: nothing can ever push the page sideways ---- */
+html, body { max-width: 100%; overflow-x: hidden; }
+
+/* ---- modal: usable on short mobile viewports (keyboard open etc.) ---- */
+@media (max-width: 640px) {
+  .modal-overlay { align-items: flex-start; padding: 6vh 12px 12px; }
+  .modal { max-height: 88vh; overflow-y: auto; }
+}
+
+/* ============================================================
+   HEADER & SPACING TIGHTEN — the section/home header block was tall
+   (small label stacked over a large display title + generous top
+   padding) with a lot of vertical air before content, especially the
+   mobile KPI strip. Reclaim that space without changing the look.
+   ============================================================ */
+
+/* less dead space at the top of every page */
+.main { padding-top: 26px; }
+
+/* section header (label + big title): shorter title, tighter rule + gap */
+.section-head { padding-bottom: 10px; margin-bottom: 16px; }
+.section-head .display { font-size: 2rem; }
+.section-head .label { margin-bottom: 2px; }
+
+/* home: tighter rhythm between the header, KPI strip and body */
+.home { gap: 22px; }
+.home-head { gap: 8px; }
+
+/* KPI strip: trim the tall tiles and the big inter-tile gap */
+.stat-grid { gap: 18px 32px; }
+.stat { min-height: 92px; padding-top: 10px; }
+.stat-value { font-size: 2.6rem; }
+
+@media (max-width: 820px) {
+  .main { padding-top: 16px; }
+  .section-head { margin-bottom: 14px; }
+  /* stacked mobile tiles don't need 90px of height each */
+  .stat-grid { gap: 14px; }
+  .stat { min-height: 0; padding-bottom: 4px; }
+  .topbar { padding-top: 10px; padding-bottom: 10px; }
+}
