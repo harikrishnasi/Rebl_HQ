@@ -1160,3 +1160,119 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .stat { min-height: 0; padding-bottom: 4px; }
   .topbar { padding-top: 10px; padding-bottom: 10px; }
 }
+
+/* ============================================================
+   HEADER CONSISTENCY — every section page's header is now the same
+   structure and height. The document detail page previously used a
+   short back-link bar + separate title (measured 29px vs 66px on all
+   other pages); it now uses the standard .section-head with a right-
+   side action cluster (like Finance's Manage button) and the back link
+   folded into the label line. min-height guarantees identical height
+   even if a title wraps or a page lacks the action cluster.
+   ============================================================ */
+.section-head { min-height: 62px; align-items: flex-end; }
+.section-head-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+.back-link { color: var(--bone-dim); }
+.back-link:hover { color: var(--bone); text-decoration: none; }
+
+@media (max-width: 820px) {
+  .section-head { min-height: 0; }
+  .section-head-actions { justify-content: flex-start; width: 100%; }
+}
+
+/* ============================================================
+   NOTES — Keep/Bear-style card grid. Colors are MUTED tints mixed
+   from the surface token so they stay on-brand and adapt to light/dark.
+   ============================================================ */
+
+/* masonry via CSS columns so cards keep natural height and pack tight */
+.note-grid {
+  columns: 260px;
+  column-gap: 16px;
+  margin-bottom: 8px;
+}
+.note-group-label { margin: 6px 0 12px; }
+
+.note-card {
+  break-inside: avoid;
+  display: block;
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 14px 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  position: relative;
+}
+.note-card:hover { border-color: var(--bone-dim); }
+
+.note-pin {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--bone-dim);
+  padding: 4px 6px;
+}
+.note-pin:hover { color: var(--bone); }
+.note-pin--on { color: var(--brass); }
+
+.note-title { font-weight: 700; font-size: 15.5px; margin: 0 26px 6px 0; }
+.note-body { font-size: 14px; }
+.note-body.prose > * + * { margin-top: 0.5em; }
+.note-body.prose h1, .note-body.prose h2, .note-body.prose h3 { font-size: 1rem; border: none; padding: 0; margin-top: 0.6em; }
+
+.note-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; }
+.note-cat {
+  font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--brass); border: 1px solid var(--brass); border-radius: var(--radius); padding: 1px 7px;
+}
+.note-label {
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--bone-dim); border: 1px solid var(--border); border-radius: var(--radius); padding: 1px 7px;
+}
+
+.note-actions {
+  display: flex; gap: 12px; align-items: center;
+  margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border);
+  opacity: 0; transition: opacity 0.12s ease;
+}
+.note-card:hover .note-actions, .note-card:focus-within .note-actions { opacity: 1; }
+.note-actions .icon-btn { margin-left: auto; }
+
+/* color tints — muted, mixed from surface; border picks up a hint too */
+.note-card[data-color="amber"]  { background: color-mix(in oklab, var(--surface) 84%, #B08D57); }
+.note-card[data-color="rose"]   { background: color-mix(in oklab, var(--surface) 86%, #C0736B); }
+.note-card[data-color="sage"]   { background: color-mix(in oklab, var(--surface) 86%, #7BA05B); }
+.note-card[data-color="sky"]    { background: color-mix(in oklab, var(--surface) 86%, #5B8DB0); }
+.note-card[data-color="violet"] { background: color-mix(in oklab, var(--surface) 86%, #8B7BB0); }
+.note-card[data-color="slate"]  { background: color-mix(in oklab, var(--surface) 80%, var(--bone-dim)); }
+
+/* editor modal bits */
+.nt-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.nt-row #nt-cat { flex: 1; min-width: 140px; }
+.nt-colors { display: flex; gap: 8px; flex-wrap: wrap; }
+.nt-swatch {
+  width: 26px; height: 26px; border-radius: 50%;
+  border: 1px solid var(--border); cursor: pointer; padding: 0;
+}
+.nt-swatch--on { outline: 2px solid var(--silver); outline-offset: 2px; }
+.nt-swatch[data-color="default"] { background: var(--surface); }
+.nt-swatch[data-color="amber"]  { background: color-mix(in oklab, var(--surface) 60%, #B08D57); }
+.nt-swatch[data-color="rose"]   { background: color-mix(in oklab, var(--surface) 60%, #C0736B); }
+.nt-swatch[data-color="sage"]   { background: color-mix(in oklab, var(--surface) 60%, #7BA05B); }
+.nt-swatch[data-color="sky"]    { background: color-mix(in oklab, var(--surface) 60%, #5B8DB0); }
+.nt-swatch[data-color="violet"] { background: color-mix(in oklab, var(--surface) 60%, #8B7BB0); }
+.nt-swatch[data-color="slate"]  { background: color-mix(in oklab, var(--surface) 55%, var(--bone-dim)); }
+
+@media (max-width: 820px) {
+  .note-grid { columns: 1; }
+  .note-actions { opacity: 1; } /* touch: no hover to reveal actions */
+}

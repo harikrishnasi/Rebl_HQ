@@ -54,7 +54,7 @@ async function importV3(tables) {
       task_completions: "completions", finance_categories: "categories",
       transactions: "transactions", subscriptions: "subscriptions",
       documents: "documents", document_versions: "versions", journal_entries: "journal",
-      social_accounts: "accounts",
+      notes: "notes", social_accounts: "accounts",
     };
     const existing = new Set(cache[keyMap[t]].map((r) => r.id));
     const fresh = rows.filter((r) => r.id && !existing.has(r.id));

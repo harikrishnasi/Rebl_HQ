@@ -12,6 +12,7 @@ import { renderDocuments, renderDocumentView } from "./views/documents.js";
 import { renderJournal } from "./views/journal.js";
 import { renderContent } from "./views/content.js";
 import { renderAccounts } from "./views/accounts.js";
+import { renderNotes } from "./views/notes.js";
 
 const app = document.getElementById("app");
 
@@ -23,6 +24,7 @@ const SECTIONS = [
   { path: "finance", name: "Finance", render: renderFinance },
   { path: "documents", name: "Documents", render: renderDocuments },
   { path: "journal", name: "Journal", render: renderJournal },
+  { path: "notes", name: "Notes", render: renderNotes },
   { path: "accounts", name: "Accounts", render: renderAccounts },
 ];
 
@@ -34,6 +36,7 @@ function counts(path) {
     return visible(cache.transactions).filter((t) => monthKey(t.occurred_on) === monthKey(todayStr())).length;
   if (path === "documents") return visible(cache.documents).length;
   if (path === "journal") return visible(cache.journal).length;
+  if (path === "notes") return visible(cache.notes).filter((n) => !n.archived).length;
   if (path === "accounts") return visible(cache.accounts).length;
   return null;
 }
@@ -89,7 +92,7 @@ function renderShell() {
     <div class="shell">
       <header class="topbar">
         <button class="icon-btn" id="menu-btn" aria-label="Menu">☰</button>
-        <span class="wordmark">REBL HQ</span>
+        <a class="wordmark" href="#/" aria-label="Home">REBL HQ</a>
       </header>
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-head"><a class="wordmark" href="#/">REBL HQ</a></div>

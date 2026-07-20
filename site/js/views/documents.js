@@ -95,19 +95,16 @@ export function renderDocumentView(main, docId) {
   const isLatest = open && latest && open.id === latest.id;
 
   main.innerHTML = `
-    <div class="doc-edit-head">
-      <a class="label" href="#/documents">← Documents</a>
-      <div class="toolbar">
+    <div class="section-head">
+      <div>
+        <div class="label"><a class="back-link" href="#/documents">← Documents</a> · ${tagChipHtml(doc.tag_id)} ${filterBadge()}</div>
+        <h1 class="display">${esc(doc.title)}</h1>
+      </div>
+      <div class="section-head-actions">
         <button class="chip" id="doc-newver">Upload new version</button>
         ${open ? `<button class="chip" id="doc-download">Download</button>` : ""}
         ${open?.kind === "markdown" && isLatest ? `<button class="chip" id="doc-edit" aria-pressed="${editing === open.id}">Edit</button>` : ""}
         <button class="chip" id="doc-rename">Rename</button>
-      </div>
-    </div>
-    <div class="section-head" style="margin-bottom:16px">
-      <div>
-        <div class="label">document ${tagChipHtml(doc.tag_id)} ${filterBadge()}</div>
-        <h1 class="display">${esc(doc.title)}</h1>
       </div>
     </div>
     ${
