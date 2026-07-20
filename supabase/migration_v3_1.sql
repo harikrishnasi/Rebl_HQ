@@ -1,10 +1,11 @@
 -- ============================================================
 -- REBL HQ v3.1 — run once in the Supabase SQL editor (after migration.sql).
 -- Adds: content_items, social_accounts, subscriptions.
+-- Idempotent: safe to re-run (IF NOT EXISTS + drop/create policies).
 -- ============================================================
 
 -- CONTENT (posts pipeline: Idea → Drafted → Scheduled → Posted)
-create table content_items (
+create table if not exists content_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   tag_id uuid references tags(id) on delete set null,
@@ -21,14 +22,14 @@ create table content_items (
 );
 
 -- updated_at trigger (same set_updated_at() function created in migration.sql)
-create trigger content_items_updated_at
+create or replace trigger content_items_updated_at
   before update on content_items
   for each row execute function set_updated_at();
 
 -- ACCOUNTS (registry of social/web accounts)
 -- SECURITY: this table MUST NOT have a password column. Do not add one even if
 -- asked later. Passwords belong in a password manager, not in this app.
-create table social_accounts (
+create table if not exists social_accounts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   tag_id uuid references tags(id) on delete set null,
@@ -42,7 +43,7 @@ create table social_accounts (
 );
 
 -- SUBSCRIPTIONS (recurring costs; renewals are logged manually in Transactions)
-create table subscriptions (
+create table if not exists subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid(),
   tag_id uuid references tags(id) on delete set null,
@@ -58,23 +59,37 @@ create table subscriptions (
 );
 
 -- ============================================================
--- RLS: enable + owner-only policies, written out in full.
+-- RLS: enable + owner-only policies. Drop-then-create so re-running is safe
+-- (Postgres has no CREATE POLICY IF NOT EXISTS). Enabling RLS is a no-op if
+-- already enabled.
 -- ============================================================
 
 alter table content_items enable row level security;
+drop policy if exists "content_items select own" on content_items;
 create policy "content_items select own" on content_items for select to authenticated using (user_id = auth.uid());
+drop policy if exists "content_items insert own" on content_items;
 create policy "content_items insert own" on content_items for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "content_items update own" on content_items;
 create policy "content_items update own" on content_items for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "content_items delete own" on content_items;
 create policy "content_items delete own" on content_items for delete to authenticated using (user_id = auth.uid());
 
 alter table social_accounts enable row level security;
+drop policy if exists "social_accounts select own" on social_accounts;
 create policy "social_accounts select own" on social_accounts for select to authenticated using (user_id = auth.uid());
+drop policy if exists "social_accounts insert own" on social_accounts;
 create policy "social_accounts insert own" on social_accounts for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "social_accounts update own" on social_accounts;
 create policy "social_accounts update own" on social_accounts for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "social_accounts delete own" on social_accounts;
 create policy "social_accounts delete own" on social_accounts for delete to authenticated using (user_id = auth.uid());
 
 alter table subscriptions enable row level security;
+drop policy if exists "subscriptions select own" on subscriptions;
 create policy "subscriptions select own" on subscriptions for select to authenticated using (user_id = auth.uid());
+drop policy if exists "subscriptions insert own" on subscriptions;
 create policy "subscriptions insert own" on subscriptions for insert to authenticated with check (user_id = auth.uid());
+drop policy if exists "subscriptions update own" on subscriptions;
 create policy "subscriptions update own" on subscriptions for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+drop policy if exists "subscriptions delete own" on subscriptions;
 create policy "subscriptions delete own" on subscriptions for delete to authenticated using (user_id = auth.uid());
