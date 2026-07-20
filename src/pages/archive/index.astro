@@ -1,0 +1,119 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getAllDocs, currentDocs, SECTIONS, SECTION_BLURBS } from '../../lib/docs';
+
+const all = await getAllDocs();
+const current = currentDocs(all);
+const countBySection = Object.fromEntries(
+  SECTIONS.map((s) => [s, current.filter((d) => d.data.section === s).length])
+);
+---
+
+<Base title="Archive" active="archive">
+  <h1 class="display">Archive</h1>
+  <p class="muted" style="max-width:68ch;margin-top:8px">
+    The knowledge base. Versioned markdown, git as the database. Press
+    <span class="badge" style="padding:0 6px">/</span> anywhere to search.
+  </p>
+
+  <!-- search -->
+  <div class="search-box" id="search" style="margin-top:32px">
+    <label class="label" for="kb-search" style="display:block;margin-bottom:8px">Search</label>
+    <input
+      type="search"
+      id="kb-search"
+      class="search-input"
+      placeholder='Search all current docs — press "/"'
+      autocomplete="off"
+    />
+    <div class="search-results" id="kb-results" aria-live="polite"></div>
+  </div>
+
+  <!-- section cards -->
+  <div class="section-head">
+    <h2 class="label">Sections</h2>
+  </div>
+  <div class="section-cards">
+    {SECTIONS.map((s) => (
+      <a class="section-card" href={`/archive/${s}/`}>
+        <span class="section-card-name">{s}</span>
+        <span class="section-card-blurb">{SECTION_BLURBS[s]}</span>
+        <span class="section-card-count">{countBySection[s]} doc{countBySection[s] === 1 ? '' : 's'}</span>
+      </a>
+    ))}
+  </div>
+
+  <script is:inline>
+    // Pagefind search island — grouped by section. Index exists after `npm run build`.
+    (function () {
+      var input = document.getElementById('kb-search');
+      var out = document.getElementById('kb-results');
+      var pagefind = null;
+      var failed = false;
+      var seq = 0;
+      var ORDER = ['now', 'strategy', 'gtm', 'product', 'brand', 'research', 'company'];
+
+      function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s || '';
+        return d.innerHTML;
+      }
+
+      async function ensure() {
+        if (pagefind || failed) return;
+        try {
+          pagefind = await import('/pagefind/pagefind.js');
+          pagefind.init();
+        } catch (e) {
+          failed = true;
+        }
+      }
+
+      async function run() {
+        var q = input.value.trim();
+        if (!q) { out.innerHTML = ''; return; }
+        var my = ++seq;
+        await ensure();
+        if (failed) {
+          out.innerHTML = '<p class="search-note">Search index not found — it is generated at build time. Run <code>npm run build && npm run preview</code>, or deploy.</p>';
+          return;
+        }
+        var res = await pagefind.search(q);
+        if (my !== seq) return; // stale
+        var hits = await Promise.all(res.results.slice(0, 30).map(function (r) { return r.data(); }));
+        if (my !== seq) return;
+        if (hits.length === 0) {
+          out.innerHTML = '<p class="search-note">Nothing found for “' + esc(q) + '”.</p>';
+          return;
+        }
+        var groups = {};
+        hits.forEach(function (h) {
+          var s = (h.meta && h.meta.section) || 'other';
+          (groups[s] = groups[s] || []).push(h);
+        });
+        var html = '';
+        var extras = Object.keys(groups).filter(function (k) { return ORDER.indexOf(k) < 0; });
+        ORDER.concat(extras).forEach(function (s) {
+          if (!groups[s]) return;
+          html += '<section><div class="label search-group-title">' + esc(s) + '</div>';
+          groups[s].forEach(function (h) {
+            html +=
+              '<div class="search-hit"><a class="search-hit-title" href="' + h.url + '">' +
+              esc(h.meta && h.meta.title) + '</a>' +
+              '<p class="search-hit-excerpt">' + h.excerpt + '</p></div>';
+          });
+          html += '</section>';
+        });
+        out.innerHTML = html;
+      }
+
+      var t;
+      input.addEventListener('input', function () {
+        clearTimeout(t);
+        t = setTimeout(run, 150);
+      });
+      // warm the index on focus so first search is instant
+      input.addEventListener('focus', ensure, { once: true });
+    })();
+  </script>
+</Base>

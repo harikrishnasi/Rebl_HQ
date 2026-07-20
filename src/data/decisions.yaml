@@ -1,0 +1,14 @@
+# category: product | money | brand | gtm | ops
+entries:
+  - date: 2026-07-07
+    decision: "Rebl HQ replaces the Notion dashboard as the single operating surface"
+    reason: "One private site, git-versioned, editable from a phone. Notion stays only where canonical: notion says so."
+    category: ops
+  - date: 2026-07-04
+    decision: "Founding-house offer capped at 3 venues, 90-day window"
+    reason: "Scarcity is honest here — we can only service three well. A deadline forces the decide moment."
+    category: gtm
+  - date: 2026-07-01
+    decision: "No paid acquisition until 10 venue interviews are done"
+    reason: "Evidence before spend. Interviews are cheaper than ads and teach more."
+    category: money

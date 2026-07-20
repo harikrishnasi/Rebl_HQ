@@ -1,0 +1,86 @@
+---
+import Base from '../../../layouts/Base.astro';
+import {
+  getAllDocs,
+  currentDocs,
+  sortForIndex,
+  urlOf,
+  fmtDate,
+  SECTIONS,
+  SECTION_BLURBS,
+  type Section,
+} from '../../../lib/docs';
+
+export async function getStaticPaths() {
+  return SECTIONS.map((section) => ({ params: { section } }));
+}
+
+const section = Astro.params.section as Section;
+const all = await getAllDocs();
+const inSection = all.filter((d) => d.data.section === section);
+const current = sortForIndex(currentDocs(all).filter((d) => d.data.section === section));
+const superseded = inSection
+  .filter((d) => !current.some((c) => c.id === d.id))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<Base title={section} active="archive">
+  <nav class="label" aria-label="Breadcrumb" style="margin-bottom:12px">
+    <a href="/archive/" style="color:inherit">Archive</a> / {section}
+  </nav>
+  <h1 class="display">{section}</h1>
+  <p class="muted" style="max-width:68ch;margin-top:8px">{SECTION_BLURBS[section]}</p>
+
+  <div class="section-head">
+    <h2 class="label">Current docs</h2>
+    <span class="label">{current.length}</span>
+  </div>
+
+  {current.length === 0 ? (
+    <div class="empty">Nothing in {section} yet. Duplicate <code>_TEMPLATE.md</code> to start one.</div>
+  ) : (
+    <div class="table-wrap">
+      <table class="rebl">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Version</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          {current.map((d) => (
+            <tr>
+              <td class="cell-strong"><a href={urlOf(d)}>{d.data.title}</a></td>
+              <td><span class="badge">v{d.data.version}</span></td>
+              <td><span class={`badge badge--${d.data.status}`}>{d.data.status}</span></td>
+              <td class="cell-dim" style="white-space:nowrap">{fmtDate(d.data.date)}</td>
+              <td class="cell-dim">{d.data.summary}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  {superseded.length > 0 && (
+    <details class="superseded-toggle">
+      <summary>Superseded versions ({superseded.length})</summary>
+      <div class="table-wrap" style="margin-top:8px">
+        <table class="rebl">
+          <tbody>
+            {superseded.map((d) => (
+              <tr>
+                <td class="cell-dim"><a href={urlOf(d)} style="color:inherit">{d.data.title}</a></td>
+                <td><span class="badge badge--superseded">v{d.data.version}</span></td>
+                <td class="cell-dim" style="white-space:nowrap">{fmtDate(d.data.date)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  )}
+</Base>

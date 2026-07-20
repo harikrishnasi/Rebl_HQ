@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import TaskGroup from '../components/TaskGroup.astro';
+import tasks from '../data/tasks.yaml';
+---
+
+<Base title="Tasks" active="tasks">
+  <h1 class="display">Task board</h1>
+  <p class="muted" style="max-width:68ch;margin-top:8px">
+    A weekly-review tool, not a todo app. Toggle checkboxes in
+    <a href="/admin/">/admin</a> — save commits the change.
+  </p>
+
+  <div class="task-groups" style="margin-top:40px">
+    <TaskGroup title="Today" tasks={tasks.today ?? []} />
+    <TaskGroup title="This week" tasks={tasks.this_week ?? []} />
+    <TaskGroup title="Parked" tasks={tasks.parked ?? []} />
+  </div>
+</Base>

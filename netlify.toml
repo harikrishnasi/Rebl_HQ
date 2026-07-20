@@ -1,0 +1,6 @@
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# v3 has no serverless functions — Supabase is the backend.
+# Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Netlify env vars (build scope).

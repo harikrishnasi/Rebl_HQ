@@ -1,0 +1,112 @@
+---
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import DocBadges from '../../../components/DocBadges.astro';
+import {
+  getAllDocs,
+  isCurrent,
+  currentOf,
+  olderVersionsOf,
+  urlOf,
+  slugOf,
+  fmtDate,
+  type Doc,
+} from '../../../lib/docs';
+
+export async function getStaticPaths() {
+  const all = await getAllDocs();
+  return all.map((doc) => ({
+    params: { section: doc.data.section, slug: slugOf(doc) },
+    props: { doc },
+  }));
+}
+
+interface Props { doc: Doc }
+const { doc } = Astro.props;
+const all = await getAllDocs();
+
+const current = isCurrent(doc, all);
+const currentVersion = currentOf(doc, all);
+const older = current ? olderVersionsOf(doc, all) : [];
+const mirror = doc.data.canonical !== 'archive';
+
+const { Content, headings } = await render(doc);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<Base title={doc.data.title} description={doc.data.summary} active="archive">
+  <article
+    data-pagefind-body={current ? '' : undefined}
+    data-pagefind-filter={current ? `section:${doc.data.section}` : undefined}
+    data-pagefind-meta={current ? `section:${doc.data.section}` : undefined}
+  >
+    <nav class="label no-print" aria-label="Breadcrumb" style="margin-bottom:20px" data-pagefind-ignore>
+      <a href="/archive/" style="color:inherit">Archive</a> /
+      <a href={`/archive/${doc.data.section}/`} style="color:inherit">{doc.data.section}</a>
+    </nav>
+
+    {!current && (
+      <div class="doc-banner" data-pagefind-ignore>
+        Superseded · v{doc.data.version}
+        {currentVersion && (
+          <> — <a href={urlOf(currentVersion)}>read current v{currentVersion.data.version}</a></>
+        )}
+      </div>
+    )}
+
+    {mirror && (
+      <div class="doc-banner" data-pagefind-ignore>
+        Mirror — canonical lives in {doc.data.canonical}
+      </div>
+    )}
+
+    <header class="doc-header">
+      <span class="label">{doc.data.section}</span>
+      <h1 class="display">{doc.data.title}</h1>
+      <div class="doc-badges" data-pagefind-ignore>
+        <DocBadges
+          version={doc.data.version}
+          status={doc.data.status}
+          canonical={doc.data.canonical}
+          showCanonical={true}
+        />
+        <span class="label">{fmtDate(doc.data.date)}</span>
+      </div>
+      <p class="doc-summary">{doc.data.summary}</p>
+    </header>
+
+    <div class="doc-layout">
+      <div class="prose">
+        <Content />
+
+        {current && older.length > 0 && (
+          <div class="doc-archive" data-pagefind-ignore>
+            <span class="label">Archive — older versions</span>
+            <ul>
+              {older.map((v) => (
+                <li>
+                  <a href={urlOf(v)} class="cell-dim" style="color:var(--bone-dim)">v{v.data.version}</a>
+                  <span class="badge badge--superseded">superseded</span>
+                  <span class="muted" style="font-size:13px">{fmtDate(v.data.date)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {toc.length > 0 && (
+        <aside class="toc no-print" data-pagefind-ignore>
+          <span class="label">On this page</span>
+          <ol>
+            {toc.map((h) => (
+              <li class={h.depth === 3 ? 'toc-h3' : undefined}>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ol>
+        </aside>
+      )}
+    </div>
+  </article>
+</Base>

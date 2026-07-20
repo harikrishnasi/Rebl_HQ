@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import DecisionList from '../components/DecisionList.astro';
+import decisions from '../data/decisions.yaml';
+
+const entries = [...(decisions.entries ?? [])].sort(
+  (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+);
+
+const CATEGORIES = ['product', 'money', 'brand', 'gtm', 'ops'];
+---
+
+<Base title="Decisions" active="decisions">
+  <h1 class="display">Decision journal</h1>
+  <p class="muted" style="max-width:68ch;margin-top:8px">
+    What was decided, when, and why. Newest first.
+  </p>
+
+  {entries.length > 0 && (
+    <div class="filter-bar" role="group" aria-label="Filter by category" style="margin-top:32px">
+      <span class="label">Category</span>
+      <button class="chip" data-value="all" aria-pressed="true">All</button>
+      {CATEGORIES.map((c) => (
+        <button class="chip" data-value={c} aria-pressed="false">{c}</button>
+      ))}
+    </div>
+  )}
+
+  <DecisionList entries={entries} />
+
+  <script is:inline>
+    (function () {
+      var bar = document.querySelector('.filter-bar');
+      if (!bar) return;
+      var items = Array.prototype.slice.call(document.querySelectorAll('.decision'));
+      bar.addEventListener('click', function (e) {
+        var chip = e.target.closest('.chip');
+        if (!chip) return;
+        var v = chip.dataset.value;
+        bar.querySelectorAll('.chip').forEach(function (c) {
+          c.setAttribute('aria-pressed', String(c === chip));
+        });
+        items.forEach(function (el) {
+          el.style.display = v === 'all' || el.dataset.category === v ? '' : 'none';
+        });
+      });
+    })();
+  </script>
+</Base>

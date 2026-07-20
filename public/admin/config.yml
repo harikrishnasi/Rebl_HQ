@@ -1,0 +1,241 @@
+# Decap CMS — Rebl HQ
+# Every dashboard data file and every archive section is editable here.
+# Phone workflow: open /admin → edit → save → commit → auto-redeploy.
+
+backend:
+  name: git-gateway   # Netlify Identity + Git Gateway (no OAuth proxy needed)
+  branch: main
+  # Deploying to Cloudflare/Vercel instead? Swap this block for:
+  #   name: github
+  #   repo: harikrishnasi/Rebl_HQ
+  #   branch: main
+  # and add an OAuth proxy Worker's URL as `base_url:` here.
+
+# `npx decap-server` in a second terminal enables /admin against the local
+# folder during development (no GitHub auth needed).
+local_backend: true
+
+media_folder: public/uploads
+public_folder: /uploads
+
+editor:
+  preview: false
+
+collections:
+  # ---------- DASHBOARD DATA ----------
+  - name: data
+    label: Dashboard Data
+    files:
+      - name: mission
+        label: Mission (hero banner)
+        file: src/data/mission.yaml
+        fields:
+          - { label: Mission line, name: mission, widget: string }
+          - { label: Phase label, name: phase, widget: string }
+          - { label: Target date, name: target_date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+
+      - name: metrics
+        label: Metrics (stat cards)
+        file: src/data/metrics.yaml
+        fields:
+          - label: Cards
+            name: cards
+            widget: list
+            summary: "{{fields.label}}: {{fields.value}}"
+            fields:
+              - { label: Label, name: label, widget: string }
+              - { label: Value, name: value, widget: string }
+              - { label: Delta, name: delta, widget: string, required: false, default: "" }
+              - { label: Caption, name: caption, widget: string, required: false, default: "" }
+
+      - name: pipeline
+        label: Pipeline (the centerpiece)
+        file: src/data/pipeline.yaml
+        fields:
+          - label: Venues
+            name: venues
+            widget: list
+            summary: "{{fields.venue}} — {{fields.stage}}"
+            fields:
+              - { label: Venue, name: venue, widget: string }
+              - { label: Segment, name: segment, widget: select, options: [brewery, club, sneaker, cafe, gym, other] }
+              - { label: Contact, name: contact, widget: string, required: false }
+              - { label: Warmth, name: warmth, widget: select, options: [cold, warm, regular], default: cold }
+              - { label: Stage, name: stage, widget: select, options: [shortlist, dm_sent, replied, interview, offer, signed, passed], default: shortlist }
+              - { label: Next action, name: next_action, widget: string, required: false }
+              - { label: Notes, name: notes, widget: text, required: false }
+              - { label: Updated, name: updated, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+
+      - name: decisions
+        label: Decision Journal
+        file: src/data/decisions.yaml
+        fields:
+          - label: Entries
+            name: entries
+            widget: list
+            summary: "{{fields.date}} — {{fields.decision}}"
+            fields:
+              - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+              - { label: Decision, name: decision, widget: string }
+              - { label: Reason, name: reason, widget: text }
+              - { label: Category, name: category, widget: select, options: [product, money, brand, gtm, ops] }
+
+      - name: tasks
+        label: Task Board
+        file: src/data/tasks.yaml
+        fields:
+          - label: Today
+            name: today
+            widget: list
+            summary: "{{fields.text}}"
+            fields:
+              - { label: Task, name: text, widget: string }
+              - { label: Done, name: done, widget: boolean, default: false }
+          - label: This week
+            name: this_week
+            widget: list
+            summary: "{{fields.text}}"
+            fields:
+              - { label: Task, name: text, widget: string }
+              - { label: Done, name: done, widget: boolean, default: false }
+          - label: Parked
+            name: parked
+            widget: list
+            summary: "{{fields.text}}"
+            fields:
+              - { label: Task, name: text, widget: string }
+              - { label: Done, name: done, widget: boolean, default: false }
+
+  # ---------- ARCHIVE — one collection per section ----------
+  - name: archive_now
+    label: "Archive · now"
+    folder: src/content/archive/now
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: now }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_strategy
+    label: "Archive · strategy"
+    folder: src/content/archive/strategy
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: strategy }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_gtm
+    label: "Archive · gtm"
+    folder: src/content/archive/gtm
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: gtm }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_product
+    label: "Archive · product"
+    folder: src/content/archive/product
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: product }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_brand
+    label: "Archive · brand"
+    folder: src/content/archive/brand
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: brand }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_research
+    label: "Archive · research"
+    folder: src/content/archive/research
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: research }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }
+
+  - name: archive_company
+    label: "Archive · company"
+    folder: src/content/archive/company
+    create: true
+    extension: md
+    format: frontmatter
+    slug: "{{slug}}"
+    sortable_fields: [date, title]
+    fields:
+      - { label: Title, name: title, widget: string, hint: "Title is the doc's identity — keep it identical across versions." }
+      - { label: Version, name: version, widget: string, default: "0.1" }
+      - { label: Status, name: status, widget: select, options: [draft, locked, superseded], default: draft }
+      - { label: Section, name: section, widget: hidden, default: company }
+      - { label: Canonical, name: canonical, widget: select, options: [archive, repo, notion], default: archive }
+      - { label: Date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Summary, name: summary, widget: text }
+      - { label: Supersedes (old filename), name: supersedes, widget: string, required: false }
+      - { label: Body, name: body, widget: markdown }

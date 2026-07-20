@@ -1,0 +1,18 @@
+---
+interface Props {
+  version: string;
+  status: 'draft' | 'locked' | 'superseded';
+  canonical?: 'repo' | 'notion' | 'archive';
+  showCanonical?: boolean;
+}
+const { version, status, canonical = 'archive', showCanonical = false } = Astro.props;
+---
+
+<span class="badge">v{version}</span>
+<span class={`badge badge--${status}`}>{status}</span>
+{showCanonical && canonical === 'archive' && (
+  <span class="badge badge--canonical-archive">canonical</span>
+)}
+{showCanonical && canonical !== 'archive' && (
+  <span class="badge badge--mirror">mirror · {canonical}</span>
+)}

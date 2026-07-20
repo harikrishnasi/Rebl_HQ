@@ -1,0 +1,61 @@
+---
+import StageBadge from './StageBadge.astro';
+
+interface Row {
+  venue: string;
+  segment: string;
+  contact?: string;
+  warmth: string;
+  stage: string;
+  next_action?: string;
+  notes?: string;
+  updated: string | Date;
+}
+interface Props {
+  rows: Row[];
+  full?: boolean; // full view shows contact + notes
+}
+const { rows, full = false } = Astro.props;
+
+const fmt = (d: string | Date) =>
+  typeof d === 'string' ? d : d.toISOString().slice(0, 10);
+---
+
+{rows.length === 0 ? (
+  <div class="empty">No venues yet. The list is the company.</div>
+) : (
+  <div class="table-wrap">
+    <table class="rebl rebl--cards">
+      <thead>
+        <tr>
+          <th>Venue</th>
+          <th>Segment</th>
+          {full && <th>Contact</th>}
+          <th>Warmth</th>
+          <th>Stage</th>
+          <th>Next action</th>
+          {full && <th>Notes</th>}
+          <th>Updated</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr
+            class={r.stage === 'passed' ? 'row--passed' : undefined}
+            data-stage={r.stage}
+            data-segment={r.segment}
+          >
+            <td data-label="Venue" class="cell-strong">{r.venue}</td>
+            <td data-label="Segment" class="cell-dim">{r.segment}</td>
+            {full && <td data-label="Contact" class="cell-dim">{r.contact}</td>}
+            <td data-label="Warmth"><span class={`warmth warmth--${r.warmth}`}>{r.warmth}</span></td>
+            <td data-label="Stage"><StageBadge stage={r.stage} /></td>
+            <td data-label="Next action">{r.next_action}</td>
+            {full && <td data-label="Notes" class="cell-dim">{r.notes}</td>}
+            <td data-label="Updated" class="cell-dim" style="white-space:nowrap">{fmt(r.updated)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}

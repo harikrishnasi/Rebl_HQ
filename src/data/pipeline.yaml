@@ -1,0 +1,29 @@
+# THE centerpiece. The list is the company.
+# stage: shortlist | dm_sent | replied | interview | offer | signed | passed
+# segment: brewery | club | sneaker | cafe | gym | other
+# warmth: cold | warm | regular
+venues:
+  - venue: "EXAMPLE — Copper Barrel Brewing"
+    segment: brewery
+    contact: "@copperbarrel (IG) · Dana, events lead"
+    warmth: warm
+    stage: dm_sent
+    next_action: "Follow up Thursday if no reply"
+    notes: "Example row — delete when real outreach starts. Taproom does trivia Tuesdays, dead Wednesdays."
+    updated: 2026-07-06
+  - venue: "EXAMPLE — Vault Sneaker Studio"
+    segment: sneaker
+    contact: "info@vaultstudio.example · walk-in"
+    warmth: cold
+    stage: shortlist
+    next_action: "Find owner's IG before DMing the shop account"
+    notes: "Example row — delete me. Strong local following, hosts release nights."
+    updated: 2026-07-05
+  - venue: "EXAMPLE — Northside Climbing Gym"
+    segment: gym
+    contact: "Priya (front desk) · 555-0142"
+    warmth: regular
+    stage: replied
+    next_action: "Book 20-min interview for next week"
+    notes: "Example row — delete me. Already asked 'what would this cost?' — good sign."
+    updated: 2026-07-07

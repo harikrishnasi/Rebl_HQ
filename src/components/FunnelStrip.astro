@@ -1,0 +1,33 @@
+---
+interface Props { rows: { stage: string }[] }
+const { rows } = Astro.props;
+
+const STAGES = [
+  ['shortlist', 'Shortlist'],
+  ['dm_sent', 'DM sent'],
+  ['replied', 'Replied'],
+  ['interview', 'Interview'],
+  ['offer', 'Offer'],
+  ['signed', 'Signed'],
+  ['passed', 'Passed'],
+] as const;
+
+const counts = STAGES.map(([key, label]) => ({
+  key,
+  label,
+  n: rows.filter((r) => r.stage === key).length,
+}));
+const max = Math.max(1, ...counts.map((c) => c.n));
+---
+
+<div class="funnel" role="img" aria-label={`Pipeline funnel: ${counts.map((c) => `${c.label} ${c.n}`).join(', ')}`}>
+  {counts.map((c) => (
+    <div class={`funnel-row funnel-row--${c.key}`}>
+      <span class="label">{c.label}</span>
+      <span class="funnel-bar-track">
+        <span class="funnel-bar" style={`width:${c.n === 0 ? 0 : Math.round((c.n / max) * 100)}%`}></span>
+      </span>
+      <span class="funnel-count">{c.n}</span>
+    </div>
+  ))}
+</div>

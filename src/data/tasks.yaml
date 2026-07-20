@@ -1,0 +1,20 @@
+# Weekly-review tool, not a todo app. Toggle done in /admin.
+today:
+  - text: "Send 5 venue DMs from the gtm outreach script"
+    done: false
+  - text: "Move interview notes from phone into research section"
+    done: false
+  - text: "Update pipeline stages after this morning's replies"
+    done: true
+this_week:
+  - text: "Lock Founding Thesis v0.3 after advisor call"
+    done: false
+  - text: "Draft founding-house pitch one-pager"
+    done: false
+  - text: "Set target list to 25 venues (10 breweries, 5 cafes, 5 gyms, 5 wildcard)"
+    done: false
+parked:
+  - text: "Explore Cloudflare Access login in front of HQ"
+    done: false
+  - text: "Bulk-import old strategy docs from Google Docs"
+    done: false

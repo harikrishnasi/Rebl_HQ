@@ -1,0 +1,87 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: 'dashboard' | 'pipeline' | 'decisions' | 'tasks' | 'archive';
+}
+const { title, description = 'Rebl HQ — private company operating site.', active } = Astro.props;
+
+const links = [
+  { key: 'dashboard', label: 'Dashboard', href: '/' },
+  { key: 'pipeline', label: 'Pipeline', href: '/pipeline/' },
+  { key: 'decisions', label: 'Decisions', href: '/decisions/' },
+  { key: 'tasks', label: 'Tasks', href: '/tasks/' },
+  { key: 'archive', label: 'Archive', href: '/archive/' },
+] as const;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/satoshi-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/big-shoulders-var.woff2" as="font" type="font/woff2" crossorigin />
+    <title>{title} · REBL HQ</title>
+  </head>
+  <body>
+    <a href="#main" class="label" style="position:absolute;left:-9999px;top:0;background:var(--surface);padding:8px 16px;z-index:10;" onfocus="this.style.left='24px'" onblur="this.style.left='-9999px'">Skip to content</a>
+    <header class="nav">
+      <div class="nav-inner">
+        <a href="/" class="wordmark">Rebl HQ</a>
+        <nav class="nav-links" aria-label="Primary">
+          {links.map((l) => (
+            <a href={l.href} aria-current={active === l.key ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="container">
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span class="label">Rebl HQ · private</span>
+        <span class="label"><a href="/admin/" style="color:inherit">Edit in /admin</a></span>
+      </div>
+    </footer>
+
+    <script is:inline>
+      // hotkey: "/" focuses search (on /archive) or jumps to it (elsewhere)
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+        var el = document.activeElement;
+        if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
+        e.preventDefault();
+        var box = document.getElementById('kb-search');
+        if (box) box.focus();
+        else window.location.href = '/archive/#search';
+      });
+    </script>
+
+    <script is:inline>
+      // Netlify Identity: only load the external widget when actually handling an
+      // invite/recovery/confirmation token, so normal page loads stay JS-free.
+      (function () {
+        if (!/(invite_token|recovery_token|confirmation_token)=/.test(location.hash)) return;
+        var s = document.createElement('script');
+        s.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+        s.onload = function () {
+          window.netlifyIdentity.on('init', function (user) {
+            if (!user) {
+              window.netlifyIdentity.on('login', function () { location.href = '/admin/'; });
+            }
+          });
+        };
+        document.head.appendChild(s);
+      })();
+    </script>
+  </body>
+</html>

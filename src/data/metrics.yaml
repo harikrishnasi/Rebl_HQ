@@ -1,0 +1,25 @@
+cards:
+  - label: Venues contacted
+    value: "3"
+    delta: "+3 this week"
+    caption: "examples — replace with real outreach"
+  - label: Interviews done
+    value: "0"
+    delta: ""
+    caption: "target: 10 before phase call"
+  - label: Founding houses signed
+    value: "0"
+    delta: ""
+    caption: "target: 3"
+  - label: MRR
+    value: "$0"
+    delta: ""
+    caption: "first dollar pending"
+  - label: Monthly burn
+    value: "$850"
+    delta: ""
+    caption: "tools + hosting + misc"
+  - label: Runway
+    value: "11"
+    delta: ""
+    caption: "months at current burn"

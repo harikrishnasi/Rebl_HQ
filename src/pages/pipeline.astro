@@ -1,0 +1,87 @@
+---
+import Base from '../layouts/Base.astro';
+import PipelineTable from '../components/PipelineTable.astro';
+import FunnelStrip from '../components/FunnelStrip.astro';
+import pipeline from '../data/pipeline.yaml';
+
+const venues = [...(pipeline.venues ?? [])].sort(
+  (a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime()
+);
+
+const STAGES = ['shortlist', 'dm_sent', 'replied', 'interview', 'offer', 'signed', 'passed'];
+const SEGMENTS = ['brewery', 'club', 'sneaker', 'cafe', 'gym', 'other'];
+---
+
+<Base title="Pipeline" active="pipeline">
+  <h1 class="display">Pipeline</h1>
+  <p class="muted" style="max-width:68ch;margin-top:8px">
+    Every venue, every stage. The list is the company.
+  </p>
+
+  <div class="section-head">
+    <h2 class="label">Funnel</h2>
+  </div>
+  <div class="panel" style="padding:24px;max-width:640px">
+    <FunnelStrip rows={venues} />
+  </div>
+
+  <div class="section-head">
+    <h2 class="label">All venues</h2>
+    <span class="label" id="row-count">{venues.length} shown</span>
+  </div>
+
+  {venues.length > 0 && (
+    <div id="pipeline-filters">
+      <div class="filter-bar" data-filter="stage" role="group" aria-label="Filter by stage">
+        <span class="label">Stage</span>
+        <button class="chip" data-value="all" aria-pressed="true">All</button>
+        {STAGES.map((s) => (
+          <button class="chip" data-value={s} aria-pressed="false">{s.replace('_', ' ')}</button>
+        ))}
+      </div>
+      <div class="filter-bar" data-filter="segment" role="group" aria-label="Filter by segment" style="margin-top:-12px">
+        <span class="label">Segment</span>
+        <button class="chip" data-value="all" aria-pressed="true">All</button>
+        {SEGMENTS.map((s) => (
+          <button class="chip" data-value={s} aria-pressed="false">{s}</button>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <PipelineTable rows={venues} full={true} />
+
+  <script is:inline>
+    // client-side stage/segment filters — the only JS on this page
+    (function () {
+      var filters = { stage: 'all', segment: 'all' };
+      var rows = Array.prototype.slice.call(document.querySelectorAll('table.rebl tbody tr'));
+      var count = document.getElementById('row-count');
+
+      function apply() {
+        var shown = 0;
+        rows.forEach(function (tr) {
+          var ok =
+            (filters.stage === 'all' || tr.dataset.stage === filters.stage) &&
+            (filters.segment === 'all' || tr.dataset.segment === filters.segment);
+          tr.style.display = ok ? '' : 'none';
+          if (ok) shown++;
+        });
+        if (count) count.textContent = shown + ' shown';
+      }
+
+      document.querySelectorAll('.filter-bar').forEach(function (bar) {
+        var kind = bar.dataset.filter;
+        bar.addEventListener('click', function (e) {
+          var chip = e.target.closest('.chip');
+          if (!chip) return;
+          filters[kind] = chip.dataset.value;
+          bar.querySelectorAll('.chip').forEach(function (c) {
+            c.setAttribute('aria-pressed', String(c === chip));
+          });
+          apply();
+        });
+      });
+    })();
+  </script>
+</Base>

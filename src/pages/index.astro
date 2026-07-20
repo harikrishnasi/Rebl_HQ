@@ -1,0 +1,96 @@
+---
+import Base from '../layouts/Base.astro';
+import FunnelStrip from '../components/FunnelStrip.astro';
+import PipelineTable from '../components/PipelineTable.astro';
+import DecisionList from '../components/DecisionList.astro';
+import TaskGroup from '../components/TaskGroup.astro';
+import mission from '../data/mission.yaml';
+import metrics from '../data/metrics.yaml';
+import pipeline from '../data/pipeline.yaml';
+import decisions from '../data/decisions.yaml';
+import tasks from '../data/tasks.yaml';
+
+const venues = pipeline.venues ?? [];
+const recent = [...venues]
+  .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
+  .slice(0, 8);
+
+const latestDecisions = [...(decisions.entries ?? [])]
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  .slice(0, 5);
+
+const target = new Date(mission.target_date);
+const daysLeft = Math.max(0, Math.ceil((target.getTime() - Date.now()) / 86400000));
+const targetLabel = target.toISOString().slice(0, 10);
+---
+
+<Base title="Dashboard" active="dashboard">
+  <!-- mission banner -->
+  <section class="mission" aria-label="Mission">
+    <div>
+      <span class="label">{mission.phase}</span>
+      <h1 class="mission-line" style="margin-top:10px">{mission.mission}</h1>
+    </div>
+    <div class="mission-meta">
+      <div>
+        <span class="label">Days remaining</span>
+        <div class="mission-days" id="days-left" data-target={targetLabel}>{daysLeft}</div>
+      </div>
+      <div>
+        <span class="label">Target</span>
+        <div style="font-size:15px;margin-top:6px;color:var(--silver)">{targetLabel}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- metrics row -->
+  <div class="section-head">
+    <h2 class="label">Metrics</h2>
+  </div>
+  <div class="stat-grid">
+    {(metrics.cards ?? []).map((c: any) => (
+      <div class="stat">
+        <span class="label">{c.label}</span>
+        <span class="stat-value">{c.value}</span>
+        {c.delta && <span class="stat-delta">{c.delta}</span>}
+        {c.caption && <span class="stat-caption">{c.caption}</span>}
+      </div>
+    ))}
+  </div>
+
+  <!-- pipeline: funnel strip + recent rows -->
+  <div class="section-head">
+    <h2 class="label">Pipeline</h2>
+    <a class="label" href="/pipeline/">View all →</a>
+  </div>
+  <div class="panel" style="padding:24px">
+    <FunnelStrip rows={venues} />
+  </div>
+  <div style="margin-top:24px">
+    <PipelineTable rows={recent} />
+  </div>
+
+  <!-- latest decisions -->
+  <div class="section-head">
+    <h2 class="label">Latest decisions</h2>
+    <a class="label" href="/decisions/">All decisions →</a>
+  </div>
+  <DecisionList entries={latestDecisions} />
+
+  <!-- today's tasks -->
+  <div class="section-head">
+    <h2 class="label">Today</h2>
+    <a class="label" href="/tasks/">Task board →</a>
+  </div>
+  <TaskGroup title="Today" tasks={tasks.today ?? []} />
+
+  <script is:inline>
+    // static build renders days-remaining as of deploy; correct it client-side
+    (function () {
+      var el = document.getElementById('days-left');
+      if (!el || !el.dataset.target) return;
+      var d = Math.max(0, Math.ceil((new Date(el.dataset.target + 'T00:00:00') - Date.now()) / 864e5));
+      el.textContent = d;
+    })();
+  </script>
+</Base>

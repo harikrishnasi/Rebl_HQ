@@ -1,0 +1,21 @@
+---
+interface Task { text: string; done: boolean }
+interface Props { title: string; tasks: Task[] }
+const { title, tasks } = Astro.props;
+---
+
+<section>
+  <h2 class="label" style="display:block;margin-bottom:8px">{title}</h2>
+  {tasks.length === 0 ? (
+    <p class="muted" style="font-size:14px">Nothing here.</p>
+  ) : (
+    <ul class="task-list">
+      {tasks.map((t) => (
+        <li class={`task${t.done ? ' task--done' : ''}`}>
+          <span class="task-box" role="checkbox" aria-checked={t.done} aria-disabled="true" aria-label={t.done ? 'done' : 'open'}></span>
+          <span class="task-text">{t.text}</span>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
