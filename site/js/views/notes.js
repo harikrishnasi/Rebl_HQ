@@ -66,12 +66,10 @@ export function renderNotes(main) {
         <div class="label">notes ${filterBadge()}</div>
         <h1 class="display">Notes</h1>
       </div>
-      <div class="section-head-actions">
-        <button class="btn btn--primary" id="new-note">+ Note</button>
-      </div>
     </div>
 
     <div class="toolbar">
+      <button class="btn btn--primary" id="new-note">+ Note</button>
       <input class="input input--search" id="note-q" placeholder="Search notes…" value="${esc(q)}" />
       <span class="label">${all.filter((n) => !n.archived).length} note${all.filter((n) => !n.archived).length === 1 ? "" : "s"}</span>
       ${archivedCount ? `<button class="chip" id="toggle-arch" aria-pressed="${showArchived}">Archived · ${archivedCount}</button>` : ""}
