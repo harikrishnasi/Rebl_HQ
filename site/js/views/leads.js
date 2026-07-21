@@ -1,39 +1,90 @@
-// LEADS — same behavior as v2's tracker, backed by the leads table.
+// LEADS — display-first pipeline. Each lead is a clean read-only row (name
+// prominent + full); click Edit to reveal the form. No always-on inputs, no
+// horizontal scroll. Backed by the leads table.
 import { cache, ins, upd, del } from "../db.js";
 import { $, $$, esc, rerender, todayStr } from "../ui.js";
-import { visible, filterBadge, tagSelectHtml, resolveTagChange } from "../tags.js";
+import { visible, filterBadge, tagChipHtml, tagSelectHtml, resolveTagChange } from "../tags.js";
 
 export const STAGES = ["Shortlist", "Reached out", "Replied", "Meeting", "Follow up", "Signed", "Passed"];
 const SEGMENTS = ["Brewery", "Club", "Sneaker", "Cafe", "Gym", "Other"];
 
 let chip = ""; // stage filter
-let q = ""; // text filter
+let q = "";
+let editingId = null; // lead id currently in edit mode
 
-function cellSelect(lead, field, options, cls = "cell cell--select") {
-  const v = lead[field] || "";
-  const opts = [...options];
-  if (v && !opts.includes(v)) opts.unshift(v);
-  const ramp = field === "stage" ? `data-stage="${esc(v)}"` : "";
-  return `<select class="${cls}" data-row="${lead.id}" data-f="${field}" ${ramp}>
-    <option value=""></option>
-    ${opts.map((o) => `<option value="${esc(o)}" ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("")}
-  </select>`;
+const fmtDate = (s) => (s ? new Date(s + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "");
+
+function editCard(l) {
+  const opt = (v, options) => {
+    const opts = [...options];
+    if (v && !opts.includes(v)) opts.unshift(v);
+    return opts.map((o) => `<option value="${esc(o)}" ${o === v ? "selected" : ""}>${esc(o)}</option>`).join("");
+  };
+  return `
+    <div class="record record--editing" data-lead="${l.id}">
+      <div class="record-grid">
+        <label class="field field--wide"><span class="field-label">Name</span>
+          <input class="input" data-f="name" value="${esc(l.name)}" placeholder="Venue / company" autofocus /></label>
+        <label class="field"><span class="field-label">Stage</span>
+          <select class="input" data-f="stage">${opt(l.stage, STAGES)}</select></label>
+        <label class="field"><span class="field-label">Segment</span>
+          <select class="input" data-f="segment"><option value=""></option>${opt(l.segment || "", SEGMENTS)}</select></label>
+        <label class="field"><span class="field-label">Contact</span>
+          <input class="input" data-f="contact" value="${esc(l.contact || "")}" placeholder="@handle · name" /></label>
+        <label class="field"><span class="field-label">Reach out on</span>
+          <input class="input" type="date" data-f="reach_out_on" value="${l.reach_out_on || ""}" /></label>
+        <label class="field"><span class="field-label">Follow up on</span>
+          <input class="input" type="date" data-f="follow_up_on" value="${l.follow_up_on || ""}" /></label>
+        <label class="field"><span class="field-label">Tag</span>
+          ${tagSelectHtml(l.tag_id || "", 'data-f="tag_id"')}</label>
+        <label class="field field--wide"><span class="field-label">Notes</span>
+          <input class="input" data-f="notes" value="${esc(l.notes || "")}" placeholder="Context, next action…" /></label>
+      </div>
+      <div class="record-edit-actions">
+        <button class="btn btn--primary" data-done="${l.id}">Done</button>
+        <button class="icon-btn" data-del-lead="${l.id}" title="Delete">Delete ×</button>
+      </div>
+    </div>`;
+}
+
+function displayRow(l) {
+  const day = todayStr();
+  const meta = [];
+  if (l.contact) meta.push(`<span>${esc(l.contact)}</span>`);
+  if (l.segment) meta.push(`<span class="record-tag-seg">${esc(l.segment)}</span>`);
+  if (l.reach_out_on) meta.push(`<span>Reach out ${fmtDate(l.reach_out_on)}</span>`);
+  if (l.follow_up_on)
+    meta.push(`<span class="${l.follow_up_on < day ? "record-overdue" : ""}">Follow up ${fmtDate(l.follow_up_on)}</span>`);
+  if (l.notes) meta.push(`<span class="record-notes">${esc(l.notes)}</span>`);
+  return `
+    <div class="record" data-lead="${l.id}">
+      <div class="record-main">
+        <div class="record-top">
+          <span class="record-name">${esc(l.name) || '<span class="muted">Untitled lead</span>'}</span>
+          <span class="badge" data-stage="${esc(l.stage)}">${esc(l.stage)}</span>
+          ${tagChipHtml(l.tag_id)}
+        </div>
+        <div class="record-meta">${meta.length ? meta.join('<span class="record-sep">·</span>') : '<span class="muted">No details yet — Edit to add</span>'}</div>
+      </div>
+      <div class="record-actions">
+        <button class="linklike" data-edit="${l.id}">Edit</button>
+        <button class="icon-btn" data-del-lead="${l.id}" title="Delete">×</button>
+      </div>
+    </div>`;
 }
 
 export function renderLeads(main) {
-  const rows = visible(cache.leads)
+  const all = visible(cache.leads);
+  const counts = {};
+  for (const l of all) counts[l.stage] = (counts[l.stage] || 0) + 1;
+  const rows = all
     .filter((l) => !chip || l.stage === chip)
     .filter((l) => {
       if (!q) return true;
       const s = q.toLowerCase();
-      return ["name", "contact", "segment", "notes", "stage"].some((f) =>
-        String(l[f] || "").toLowerCase().includes(s)
-      );
+      return ["name", "contact", "segment", "notes", "stage"].some((f) => String(l[f] || "").toLowerCase().includes(s));
     })
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-  const all = visible(cache.leads);
-  const counts = {};
-  for (const l of all) counts[l.stage] = (counts[l.stage] || 0) + 1;
 
   main.innerHTML = `
     <div class="section-head">
@@ -50,42 +101,18 @@ export function renderLeads(main) {
     <div class="filter-bar">
       <span class="label">Stage</span>
       <button class="chip" data-chip="" aria-pressed="${!chip}">All · ${all.length}</button>
-      ${STAGES.map(
-        (s) => `<button class="chip" data-chip="${s}" aria-pressed="${chip === s}">${s} · ${counts[s] || 0}</button>`
-      ).join("")}
+      ${STAGES.map((s) => `<button class="chip" data-chip="${s}" aria-pressed="${chip === s}">${s} · ${counts[s] || 0}</button>`).join("")}
     </div>
     ${
       rows.length
-        ? `<div class="table-wrap"><table class="rebl rebl--tracker"><thead><tr>
-            <th class="label-th">Name</th><th class="label-th">Stage</th><th class="label-th">Contact</th>
-            <th class="label-th">Segment</th><th class="label-th">Reach out on</th>
-            <th class="label-th">Follow up on</th><th class="label-th">Notes</th><th class="label-th">Tag</th><th></th>
-          </tr></thead><tbody>
-          ${rows
-            .map(
-              (l) => `<tr data-lead="${l.id}">
-              <td><input class="cell" data-row="${l.id}" data-f="name" value="${esc(l.name)}" /></td>
-              <td>${cellSelect(l, "stage", STAGES)}</td>
-              <td><input class="cell" data-row="${l.id}" data-f="contact" value="${esc(l.contact || "")}" /></td>
-              <td>${cellSelect(l, "segment", SEGMENTS)}</td>
-              <td><input class="cell" type="date" data-row="${l.id}" data-f="reach_out_on" value="${l.reach_out_on || ""}" /></td>
-              <td><input class="cell" type="date" data-row="${l.id}" data-f="follow_up_on" value="${l.follow_up_on || ""}" /></td>
-              <td><input class="cell" data-row="${l.id}" data-f="notes" value="${esc(l.notes || "")}" /></td>
-              <td>${tagSelectHtml(l.tag_id || "", `data-lead-tag="${l.id}"`)}</td>
-              <td class="td-del"><button class="icon-btn" data-del-lead="${l.id}" title="Delete">×</button></td>
-            </tr>`
-            )
-            .join("")}</tbody></table></div>`
+        ? `<div class="record-list">${rows.map((l) => (editingId === l.id ? editCard(l) : displayRow(l))).join("")}</div>`
         : `<div class="empty">No leads${chip || q ? " match" : " yet. The list is the company"}.</div>`
     }`;
 
   $("#add-lead", main).addEventListener("click", () => {
-    const row = ins("leads", {
-      name: "",
-      stage: chip && chip !== "Passed" ? chip : "Shortlist",
-      created_at: new Date().toISOString(),
-    });
-    setTimeout(() => $(`tr[data-lead="${row.id}"] .cell`)?.focus(), 0);
+    const row = ins("leads", { name: "", stage: chip && chip !== "Passed" ? chip : "Shortlist", created_at: new Date().toISOString() });
+    editingId = row.id;
+    rerender();
   });
 
   let qTimer;
@@ -95,38 +122,41 @@ export function renderLeads(main) {
     qTimer = setTimeout(() => {
       rerender();
       const inp = $("#lead-q");
-      if (inp) {
-        inp.focus();
-        inp.setSelectionRange(inp.value.length, inp.value.length);
-      }
+      if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
     }, 250);
   });
 
   $$("[data-chip]", main).forEach((b) =>
-    b.addEventListener("click", () => {
-      chip = b.dataset.chip;
-      rerender();
-    })
+    b.addEventListener("click", () => { chip = b.dataset.chip; rerender(); })
   );
-
-  // inline edits persist on change (i.e. blur for text inputs)
-  const tbody = $("tbody", main);
-  tbody?.addEventListener("change", (e) => {
-    const el = e.target;
-    if (el.dataset.leadTag !== undefined) {
-      const id = resolveTagChange(el);
-      if (id !== null) upd("leads", el.dataset.leadTag, { tag_id: id || null });
-      return;
-    }
-    if (!el.dataset.f) return;
-    // name is NOT NULL — keep empty string; other fields prefer null when cleared
-    upd("leads", el.dataset.row, { [el.dataset.f]: el.dataset.f === "name" ? el.value : el.value || null });
-  });
-
+  $$("[data-edit]", main).forEach((b) =>
+    b.addEventListener("click", () => { editingId = b.dataset.edit; rerender(); })
+  );
+  $$("[data-done]", main).forEach((b) =>
+    b.addEventListener("click", () => { editingId = null; rerender(); })
+  );
   $$("[data-del-lead]", main).forEach((b) =>
     b.addEventListener("click", () => {
       if (!confirm("Delete this lead?")) return;
+      if (editingId === b.dataset.delLead) editingId = null;
       del("leads", b.dataset.delLead);
     })
   );
+
+  // inline edits persist on change (blur) while in edit mode
+  const list = $(".record-list", main);
+  list?.addEventListener("change", (e) => {
+    const el = e.target;
+    const card = el.closest("[data-lead]");
+    if (!card || !el.dataset.f) return;
+    const id = card.dataset.lead;
+    if (el.dataset.f === "tag_id") {
+      const tid = resolveTagChange(el);
+      if (tid !== null) upd("leads", id, { tag_id: tid || null });
+      return;
+    }
+    const val = el.dataset.f === "name" ? el.value : el.value || null;
+    upd("leads", id, { [el.dataset.f]: val });
+    if (el.dataset.f === "stage") { const badge = 0; /* stage color updates on Done */ }
+  });
 }
