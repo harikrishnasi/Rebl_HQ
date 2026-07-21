@@ -13,6 +13,7 @@ import { renderJournal } from "./views/journal.js";
 import { renderContent } from "./views/content.js";
 import { renderAccounts } from "./views/accounts.js";
 import { renderNotes } from "./views/notes.js";
+import { renderWebsites } from "./views/websites.js";
 
 const app = document.getElementById("app");
 
@@ -26,6 +27,7 @@ const SECTIONS = [
   { path: "journal", name: "Journal", render: renderJournal },
   { path: "notes", name: "Notes", render: renderNotes },
   { path: "accounts", name: "Accounts", render: renderAccounts },
+  { path: "websites", name: "Websites", render: renderWebsites },
 ];
 
 function counts(path) {
@@ -38,6 +40,7 @@ function counts(path) {
   if (path === "journal") return visible(cache.journal).length;
   if (path === "notes") return visible(cache.notes).filter((n) => !n.archived).length;
   if (path === "accounts") return visible(cache.accounts).length;
+  if (path === "websites") return visible(cache.websites).length;
   return null;
 }
 

@@ -5,6 +5,7 @@ import { excerpt } from "../md.js";
 import { visible, filterBadge } from "../tags.js";
 import { todayList, wireTaskListEvents, isCheckedNow } from "./tasks.js";
 import { STAGES } from "./leads.js";
+import { renewalInfo, statusPill } from "./websites.js";
 import { QUOTES } from "../quotes.js";
 
 let quoteOffset = 0; // click-to-advance within a session; base rotates daily
@@ -41,6 +42,15 @@ export function renderHome(main) {
   const renewals = visible(cache.subscriptions)
     .filter((s) => s.status !== "cancelled" && s.next_renewal && s.next_renewal >= day && s.next_renewal <= addDays(day, 7))
     .sort((a, b) => (a.next_renewal > b.next_renewal ? 1 : -1));
+
+  // websites: down first, then soonest renewal
+  const sites = visible(cache.websites).slice().sort((a, b) => {
+    if ((a.status === "down") !== (b.status === "down")) return a.status === "down" ? -1 : 1;
+    const ra = renewalInfo(a.renewal_on, day).days, rb = renewalInfo(b.renewal_on, day).days;
+    return (ra ?? 1e9) - (rb ?? 1e9);
+  });
+  const sitesLive = sites.filter((s) => s.status === "live").length;
+  const sitesDown = sites.filter((s) => s.status === "down").length;
   const fmtSub = (s) =>
     new Intl.NumberFormat(s.currency === "USD" ? "en-US" : "en-IN", {
       style: "currency", currency: s.currency || "INR", maximumFractionDigits: 0,
@@ -189,6 +199,28 @@ export function renderHome(main) {
                       <span class="badge">${fmtSub(s)}</span>
                     </a>`
                   )
+                  .join("")}
+              </section>`
+            : ""
+        }
+
+        ${
+          sites.length
+            ? `<section class="panel home-panel">
+                <div class="panel-head">
+                  <span class="label">Websites · ${sitesLive} live${sitesDown ? ` · ${sitesDown} down` : ""}</span>
+                  <a class="panel-link" href="#/websites">All →</a>
+                </div>
+                ${sites
+                  .slice(0, 5)
+                  .map((w) => {
+                    const r = renewalInfo(w.renewal_on, day);
+                    return `<a class="followup site-row" href="#/websites">
+                      ${statusPill(w.status)}
+                      <span class="followup-name">${esc(w.name || "—")}</span>
+                      ${r.label ? `<span class="renew-badge renew-badge--${r.tone}">${r.label}</span>` : ""}
+                    </a>`;
+                  })
                   .join("")}
               </section>`
             : ""

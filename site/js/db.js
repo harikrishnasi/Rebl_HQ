@@ -19,6 +19,7 @@ export const TABLES = [
   "journal_entries",
   "notes",
   "social_accounts",
+  "websites",
   "settings",
 ];
 
@@ -37,6 +38,7 @@ const KEY = {
   journal_entries: "journal",
   notes: "notes",
   social_accounts: "accounts",
+  websites: "websites",
   settings: "settingsRows",
 };
 
@@ -54,6 +56,7 @@ export const cache = {
   journal: [],
   notes: [],
   accounts: [],
+  websites: [],
   settingsRows: [],
   settings: {}, // key -> value, derived from settingsRows
 };

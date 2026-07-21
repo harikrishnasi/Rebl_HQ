@@ -113,7 +113,7 @@ export function manageTagsModal() {
       const t = cache.tags.find((x) => x.id === b.dataset.deltag);
       if (!confirm(`Delete tag "${t?.name}"? Records keep their data and become untagged.`)) return;
       // FK is on delete set null server-side; mirror locally
-      for (const key of ["leads", "content", "tasks", "transactions", "subscriptions", "documents", "journal", "notes", "accounts"])
+      for (const key of ["leads", "content", "tasks", "transactions", "subscriptions", "documents", "journal", "notes", "accounts", "websites"])
         cache[key].forEach((r) => {
           if (r.tag_id === b.dataset.deltag) r.tag_id = null;
         });

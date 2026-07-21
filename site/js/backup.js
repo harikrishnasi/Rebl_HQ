@@ -31,6 +31,7 @@ export function dumpData() {
       journal_entries: cache.journal,
       notes: cache.notes,
       social_accounts: cache.accounts,
+      websites: cache.websites,
       settings: cache.settingsRows,
     },
   };

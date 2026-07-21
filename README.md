@@ -1,6 +1,6 @@
-# REBL HQ v3.2
+# REBL HQ v3.3
 
-Private founder dashboard for a one-person company. One Supabase login, nine
+Private founder dashboard for a one-person company. One Supabase login, ten
 fixed sections, everything edited directly in the app:
 
 | Section | What it does |
@@ -14,6 +14,7 @@ fixed sections, everything edited directly in the app:
 | **Journal** | One entry per working session: Designed/Decided · Rejected · Why, all markdown |
 | **Notes** | A modern notes surface (Keep/Bear-style): masonry card grid with pin-to-top, muted color labels, freeform categories, note-level labels, full-text search, archive, and markdown bodies |
 | **Accounts** | Registry of social/web accounts: platform, handle, profile URL, login email, purpose. **Never passwords** — those live in your password manager |
+| **Websites** | Track sites: live/down/building/paused status (colored pills), domain renewal date → computed "renews in XX days" countdown (overdue/soon/ok tones), provider, filters incl. "renewing ≤30d". Down-first status summary surfaces on Home |
 
 **Tags** (Rebl / Orbit / your own) mark which company a record belongs to. The
 global filter at the top of the sidebar scopes *everything* — Home metrics,
@@ -27,8 +28,9 @@ browser. Owner-only row-level security on every table; no server of our own.
 
 1. Create a project at [supabase.com](https://supabase.com) (free tier is fine).
 2. **SQL editor** → paste and run the whole of [supabase/migration.sql](supabase/migration.sql),
-   then [supabase/migration_v3_1.sql](supabase/migration_v3_1.sql), then
-   [supabase/migration_v3_2.sql](supabase/migration_v3_2.sql). This creates all
+   then [supabase/migration_v3_1.sql](supabase/migration_v3_1.sql),
+   [supabase/migration_v3_2.sql](supabase/migration_v3_2.sql), then
+   [supabase/migration_v3_3.sql](supabase/migration_v3_3.sql). This creates all
    tables, RLS policies, the `hq-docs` private storage bucket and its policies.
 3. **Authentication → Users → Add user**: create your single account
    (email + password, "Auto confirm user"). There is no signup in the app,
@@ -87,6 +89,7 @@ site/                  the app (vite root): index.html, styles.css, js/
 supabase/migration.sql       the v3 database, run once
 supabase/migration_v3_1.sql  v3.1 additions (content, accounts, subscriptions), run once
 supabase/migration_v3_2.sql  v3.2 addition (notes), run once
+supabase/migration_v3_3.sql  v3.3 addition (websites), run once
 src/, public/          the OLD v1 Astro site, kept as reference; not deployed
 ```
 
