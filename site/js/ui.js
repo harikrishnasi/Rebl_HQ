@@ -11,6 +11,18 @@ export function esc(s) {
     .replaceAll('"', "&quot;");
 }
 
+/** Sanitize a user-provided URL: only http(s)/mailto/relative pass; blocks
+ *  javascript:, data:, vbscript:, etc. Returns "" if unsafe (caller hides the link). */
+export function safeUrl(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+  if (/^(\/|\.|#|\?)/.test(s)) return s;                 // relative / fragment
+  const m = s.match(/^([a-zA-Z][a-zA-Z0-9+.\-]*):/);      // has an explicit scheme?
+  if (!m) return "https://" + s;                          // bare domain → assume https
+  const scheme = m[1].toLowerCase();
+  return scheme === "http" || scheme === "https" || scheme === "mailto" ? s : "";
+}
+
 export const uid = () =>
   crypto.randomUUID
     ? crypto.randomUUID()

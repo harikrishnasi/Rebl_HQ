@@ -1,6 +1,6 @@
 // CONTENT — posts pipeline (Idea → Drafted → Scheduled → Posted). Leads-mirror.
 import { cache, ins, upd, del } from "../db.js";
-import { $, $$, esc, rerender, todayStr } from "../ui.js";
+import { $, $$, esc, rerender, todayStr, safeUrl } from "../ui.js";
 import { visible, filterBadge, activeTag, tagSelectHtml, resolveTagChange } from "../tags.js";
 
 export const CONTENT_STATUSES = ["Idea", "Drafted", "Scheduled", "Posted"];
@@ -83,7 +83,7 @@ export function renderContent(main) {
               <td><input class="cell" type="date" data-row="${c.id}" data-f="publish_on" value="${c.publish_on || ""}" /></td>
               <td class="link-cell">
                 <input class="cell" data-row="${c.id}" data-f="link" value="${esc(c.link || "")}" placeholder="https://" />
-                ${c.link ? `<a class="open-link" href="${esc(c.link)}" target="_blank" rel="noopener">Open ↗</a>` : ""}
+                ${safeUrl(c.link) ? `<a class="open-link" href="${esc(safeUrl(c.link))}" target="_blank" rel="noopener noreferrer">Open ↗</a>` : ""}
               </td>
               <td>${tagSelectHtml(c.tag_id || "", `data-row-tag="${c.id}"`)}</td>
               <td><input class="cell" data-row="${c.id}" data-f="notes" value="${esc(c.notes || "")}" /></td>

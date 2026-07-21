@@ -6,6 +6,7 @@ import { visible, filterBadge } from "../tags.js";
 import { todayList, wireTaskListEvents, isCheckedNow } from "./tasks.js";
 import { STAGES } from "./leads.js";
 import { renewalInfo, statusPill } from "./websites.js";
+import { fullBackupStale, daysSinceFullBackup, backupModal } from "../backup.js";
 import { QUOTES } from "../quotes.js";
 
 let quoteOffset = 0; // click-to-advance within a session; base rotates daily
@@ -72,6 +73,16 @@ export function renderHome(main) {
       <input class="mission-input" id="mission" value="${esc(cache.settings.mission || "")}"
         placeholder="Write the mission line — the one sentence this quarter answers to" />
     </header>
+
+    ${
+      fullBackupStale()
+        ? `<button class="backup-nudge" id="backup-nudge">
+            <span class="web-dot" style="background:var(--brass)"></span>
+            ${daysSinceFullBackup() === null ? "No off-site backup yet" : `Last off-site backup ${daysSinceFullBackup()} days ago`}
+            — download a full backup and keep it in Google Drive →
+          </button>`
+        : ""
+    }
 
     <div class="stat-grid">
       <a class="stat" href="#/leads">
@@ -235,6 +246,7 @@ export function renderHome(main) {
   </div>`;
 
   $("#mission", main).addEventListener("change", (e) => setSetting("mission", e.target.value.trim()));
+  $("#backup-nudge", main)?.addEventListener("click", backupModal);
   wireTaskListEvents(main);
 
   const nextQuote = () => {

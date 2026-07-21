@@ -1,6 +1,6 @@
 // WEBSITES — track live/down status and domain-renewal countdowns.
 import { cache, ins, upd, del } from "../db.js";
-import { $, $$, esc, rerender, todayStr, diffDays } from "../ui.js";
+import { $, $$, esc, rerender, todayStr, diffDays, safeUrl } from "../ui.js";
 import { visible, filterBadge, activeTag, tagSelectHtml, resolveTagChange } from "../tags.js";
 
 export const WEB_STATUSES = ["live", "down", "building", "paused"];
@@ -90,7 +90,7 @@ export function renderWebsites(main) {
               <td><input class="cell" data-row="${w.id}" data-f="name" value="${esc(w.name)}" placeholder="getrebl.com" /></td>
               <td class="link-cell">
                 <input class="cell" data-row="${w.id}" data-f="url" value="${esc(w.url || "")}" placeholder="https://" />
-                ${w.url ? `<a class="open-link" href="${esc(w.url)}" target="_blank" rel="noopener">Open ↗</a>` : ""}
+                ${safeUrl(w.url) ? `<a class="open-link" href="${esc(safeUrl(w.url))}" target="_blank" rel="noopener noreferrer">Open ↗</a>` : ""}
               </td>
               <td>${statusSelect(w)}</td>
               <td>

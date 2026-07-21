@@ -4,12 +4,12 @@
 //  documents→document+markdown v1, journal→journal_entries).
 import { cache, TABLES, insAwait } from "./db.js";
 import { uid, todayStr, toast, rerender } from "./ui.js";
-import { dumpData } from "./backup.js";
+import { buildDump, verifyDump, extractDataJsonFromZip } from "./backup.js";
 
-export function exportJson() {
+export async function exportJson() {
   // storage binaries are not included — file versions keep their metadata + storage path
-  const dump = dumpData();
-  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
+  const { json } = await buildDump();
+  const blob = new Blob([json], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = `rebl-hq-${todayStr()}.json`;
@@ -21,31 +21,40 @@ export function importJson(e) {
   const file = e.target.files[0];
   e.target.value = "";
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
+  (async () => {
     try {
-      const data = JSON.parse(reader.result);
+      // accept a raw .json export/snapshot OR a full-backup .zip
+      const text = file.name.endsWith(".zip")
+        ? await extractDataJsonFromZip(await file.arrayBuffer())
+        : await file.text();
+      if (!text) throw new Error("no data.json found in the file");
+      const data = JSON.parse(text);
+
       if (data?.v === 3 && data.tables) {
-        if (!confirm(`Import v3 dump "${file.name}"? Rows are added to your current data (no overwrite).`)) return;
-        await importV3(data.tables);
+        const v = await verifyDump(data);
+        if (!v.ok && v.reason.includes("Checksum") &&
+            !confirm(`⚠ ${v.reason}. Import anyway?`)) return;
+        if (!confirm(`Import "${file.name}"?\n${v.rows} rows, ${v.files} file reference(s). Existing rows are kept; only new ids are added (no overwrite, no delete).`)) return;
+        const added = await importV3(data.tables);
+        toast(`Import complete — ${added} new row(s) added`);
       } else if (Array.isArray(data?.sections)) {
         if (!confirm(`Migrate old app export "${file.name}" into Supabase?`)) return;
         await importV2(data);
+        toast("Import complete");
       } else {
         throw new Error("unrecognized format");
       }
-      toast("Import complete");
       rerender();
     } catch (err) {
       console.error(err);
       toast("Import failed: " + err.message, true);
     }
-  };
-  reader.readAsText(file);
+  })();
 }
 
 async function importV3(tables) {
   const order = TABLES.filter((t) => t !== "settings"); // keep FK order: tags first
+  let added = 0;
   for (const t of order) {
     const rows = (tables[t] || []).map(({ user_id, ...r }) => r);
     // skip rows whose id already exists locally
@@ -59,7 +68,9 @@ async function importV3(tables) {
     const existing = new Set(cache[keyMap[t]].map((r) => r.id));
     const fresh = rows.filter((r) => r.id && !existing.has(r.id));
     if (fresh.length) await insAwait(t, fresh);
+    added += fresh.length;
   }
+  return added;
 }
 
 /* ---- v2 (localStorage app) migration ---- */

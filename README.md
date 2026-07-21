@@ -61,23 +61,57 @@ npm run deploy                         # builds with vite, publishes dist/
 The anon key is safe to ship to the browser — RLS is what protects the data.
 Verify: sign out and try a select with the anon key; it must return nothing.
 
-## Backup / Import / Export
+## Backups — the 3-2-1 rule
 
-- **Backup** (sidebar) has two layers:
-  - **Download full backup (.zip)** — one zip with `data.json` (every table)
-    *plus every uploaded document file*, fetched from storage. This is the
-    complete offline copy.
-  - **Supabase snapshots** — the JSON dump saved into the private `hq-docs`
-    bucket under `{uid}/backups/`. One is taken **automatically once a day**
-    when you open the app; the last 14 are kept and listed in the Backup modal
-    with download links. Restore any snapshot via **Import**.
-- **Export** dumps every table to one JSON file (no binaries — file versions
-  keep their metadata and storage path).
-- **Import** accepts a v3 dump / snapshot (rows are added, existing ids
-  skipped) or the old v2 localStorage-app export, which is migrated: leads →
-  `leads`, tasks → `once` tasks, expenses → `transactions` (expense,
-  Uncategorized), documents → document + markdown v1, journal → entries
-  (body in *Designed*).
+Your data is the company, so there are **three independent copies**:
+
+1. **Live data — Supabase Postgres + the private `hq-docs` bucket.** RLS
+   owner-only. **Turn on Supabase's own backups** (Dashboard → Database →
+   Backups): daily backups on every plan, and Point-in-Time Recovery on Pro.
+   This is the real database-level safety net and recovers the whole project.
+2. **In-project snapshots — automatic, once a day.** On login the app writes an
+   integrity-checked JSON dump into `{uid}/backups/`. Retention keeps the last
+   **14 daily + 12 monthly** snapshots (long history, bounded size). Each dump
+   carries a `manifest` with per-table row counts and a **SHA-256 checksum** of
+   the data.
+3. **Off-site — the full backup zip → your Google Drive.** In **Backup**, click
+   **Download full backup (.zip)**: `data.json` (every table, checksummed) +
+   **every uploaded file** + a `README.txt`. Save it into your Google Drive
+   folder (or the Drive desktop app) so it's off-site and independent of
+   Supabase. Home shows a nudge when this is **> 14 days old** or missing.
+
+**Verify before you trust.** Backup → **Verify a backup** re-reads any `.json`
+or `.zip` and re-computes the checksum, so a corrupt or truncated file is caught
+*before* you ever need to restore it.
+
+**Restore** — sidebar **Import** accepts a `.json` (export/snapshot) or a full
+backup `.zip`. It verifies shape + checksum, shows the row/file counts to
+confirm, then **adds only rows whose id doesn't already exist** — never
+overwrites or deletes. (Uploaded file *binaries* live in storage; if you lose
+the Supabase project, restore files from the off-site zip.)
+
+- **Export** (sidebar) is the quick `data.json` only (checksummed; no file
+  binaries — versions keep their storage path).
+- **Import** also migrates the old v2 localStorage-app export (leads → `leads`,
+  tasks → `once` tasks, expenses → `transactions`, documents → markdown v1,
+  journal → entries).
+
+## Security
+
+- **RLS default-deny, owner-only** on every table; the anon key holds zero data
+  access when signed out (verify with a signed-out `select`). Storage is a
+  private bucket; every read is a short-lived signed URL, writes are restricted
+  to your own `{uid}/` prefix.
+- **Content-Security-Policy** (meta + Vercel headers): `script-src 'self'` (no
+  inline JS), and `connect-src` limited to self + Supabase — so even a
+  hypothetical injection can't run an external script or exfiltrate data to
+  another origin. Plus `nosniff`, `frame-ancestors 'none'`, `no-referrer`, HSTS.
+- **Untrusted content is sanitized.** Markdown is rendered through DOMPurify
+  (scripts/handlers/`javascript:` stripped; links forced to
+  `rel="noopener noreferrer"`). User-entered URLs (website/account/content links)
+  pass through a scheme allowlist (`http`/`https`/`mailto` only).
+- **Never store passwords or secrets** in the app — Accounts holds handles and
+  login emails only; passwords live in your password manager.
 
 ## Layout
 

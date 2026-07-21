@@ -4,12 +4,23 @@ import DOMPurify from "dompurify";
 
 marked.setOptions({ gfm: true, breaks: false });
 
+// Every external link opens safely: target=_blank + rel=noopener noreferrer.
+// (DOMPurify already strips javascript:/data: URIs from href by default.)
+DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+  if (node.tagName === "A" && node.getAttribute("href")) {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
+
 export function renderMd(src) {
   if (!src) return "";
   const html = marked.parse(String(src));
   return DOMPurify.sanitize(html, {
-    ADD_ATTR: ["target"],
-    FORBID_TAGS: ["style", "form", "input", "button"],
+    FORBID_TAGS: ["style", "form", "input", "button", "iframe", "object", "embed"],
+    FORBID_ATTR: ["style"],
+    ALLOW_DATA_ATTR: false,
+    ADD_ATTR: ["target", "rel"],
   });
 }
 

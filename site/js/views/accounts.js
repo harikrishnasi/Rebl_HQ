@@ -2,7 +2,7 @@
 // SECURITY: no password field, no secret field, ever (see migration_v3_1.sql).
 // Handles and login emails only — passwords live in your password manager.
 import { cache, ins, upd, del } from "../db.js";
-import { $, $$, esc, rerender } from "../ui.js";
+import { $, $$, esc, rerender, safeUrl } from "../ui.js";
 import { visible, filterBadge, activeTag, tagSelectHtml, resolveTagChange } from "../tags.js";
 
 const PLATFORMS = ["LinkedIn", "Twitter", "Instagram", "GitHub", "Website", "Other"];
@@ -53,7 +53,7 @@ export function renderAccounts(main) {
               <td><input class="cell" data-row="${a.id}" data-f="handle" value="${esc(a.handle)}" placeholder="@handle" /></td>
               <td class="link-cell">
                 <input class="cell" data-row="${a.id}" data-f="profile_url" value="${esc(a.profile_url || "")}" placeholder="https://" />
-                ${a.profile_url ? `<a class="open-link" href="${esc(a.profile_url)}" target="_blank" rel="noopener">Open ↗</a>` : ""}
+                ${safeUrl(a.profile_url) ? `<a class="open-link" href="${esc(safeUrl(a.profile_url))}" target="_blank" rel="noopener noreferrer">Open ↗</a>` : ""}
               </td>
               <td><input class="cell" data-row="${a.id}" data-f="login_email" value="${esc(a.login_email || "")}" placeholder="email" /></td>
               <td><input class="cell" data-row="${a.id}" data-f="purpose" value="${esc(a.purpose || "")}" /></td>
