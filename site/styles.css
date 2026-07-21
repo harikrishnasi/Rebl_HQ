@@ -1276,3 +1276,11 @@ html, body { max-width: 100%; overflow-x: hidden; }
   .note-grid { columns: 1; }
   .note-actions { opacity: 1; } /* touch: no hover to reveal actions */
 }
+
+/* ---- doc-detail action row: one compact scrollable row on mobile so the
+   top chrome matches other pages (a single toolbar row) instead of
+   wrapping to two. Secondary actions reveal on swipe. ---- */
+.toolbar--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.toolbar--scroll::-webkit-scrollbar { display: none; }
+.toolbar--scroll .chip { flex: none; }
+.doc-pane { min-width: 0; }
